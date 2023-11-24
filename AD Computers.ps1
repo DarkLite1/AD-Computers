@@ -73,23 +73,23 @@ Begin {
 
 Process {
     Try {
-        $Computers = Get-ADComputerHC -OU $OUs -EA Stop
+        $computers = Get-ADComputerHC -OU $OUs -EA Stop
 
-        $MailParams = @{
+        $mailParams = @{
             To        = $MailTo
             Bcc       = $ScriptAdmin
-            Subject   = "$($Computers.count) computers found"
-            Message   = "<p><b>$(@($Computers).count) computers</b> found:</p>"
-            LogFolder = $LogParams.LogFolder
+            Subject   = "$($computers.count) computers found"
+            Message   = "<p><b>$(@($computers).count) computers</b> found:</p>"
+            LogFolder = $logParams.LogFolder
             Header    = $ScriptName
-            Save      = $LogFile + ' - Mail.html'
+            Save      = $logFile + ' - Mail.html'
         }
 
-        if ($Computers) {
-            Remove-Item $LogFile -Force -EA Ignore
+        if ($computers) {
+            Remove-Item $logFile -Force -EA Ignore
 
-            $ExcelParams = @{
-                Path          = $LogFile + '.xlsx'
+            $excelParams = @{
+                Path          = $logFile + '.xlsx'
                 AutoSize      = $true
                 BoldTopRow    = $true
                 FreezeTopRow  = $true
@@ -97,11 +97,11 @@ Process {
                 TableName     = 'Computers'
                 ErrorAction   = 'Stop'
             }
-            $Computers | Export-Excel @ExcelParams
+            $computers | Export-Excel @excelParams
 
-            $MailParams.Attachments = $ExcelParams.Path
+            $mailParams.Attachments = $excelParams.Path
 
-            $MailParams.Message += $Computers | Group-Object OS |
+            $mailParams.Message += $computers | Group-Object OS |
             Select-Object @{ 
                 Name       = 'Operating system'
                 Expression = { $_.Name } 
@@ -113,10 +113,10 @@ Process {
             Sort-Object 'Operating system' | 
             ConvertTo-Html -As Table -Fragment
 
-            $MailParams.Message += "<p><i>* Check the attachment for details</i></p>"
+            $mailParams.Message += "<p><i>* Check the attachment for details</i></p>"
         }
 
-        $MailParams.Message += $OUs | ConvertTo-OuNameHC -OU | 
+        $mailParams.Message += $OUs | ConvertTo-OuNameHC -OU | 
         Sort-Object | ConvertTo-HtmlListHC -Header 'Organizational units:'
 
         Get-ScriptRuntimeHC -Stop
